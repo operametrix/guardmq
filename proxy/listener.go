@@ -70,3 +70,14 @@ func (listener *Listener) Serve() {
 		go LaunchConnection(conn)
 	}
 }
+
+func LaunchConnection(inboundConn net.Conn) {
+	outboundConn, err := ConnectLocalBroker()
+	if err != nil {
+		log.Println("Failed to serve the incoming connection")
+		outboundConn.Close()
+		return
+	}
+
+	HandleConnection(inboundConn, outboundConn)
+}

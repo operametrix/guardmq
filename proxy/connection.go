@@ -37,17 +37,6 @@ func ConnectLocalBroker() (conn net.Conn, err error) {
 	return outboundConn, err
 }
 
-func LaunchConnection(inboundConn net.Conn) {
-	outboundConn, err := ConnectLocalBroker()
-	if err != nil {
-		log.Println("Failed to serve the incoming connection")
-		outboundConn.Close()
-		return
-	}
-
-	HandleConnection(inboundConn, outboundConn)
-}
-
 func HandleConnection(inboundConn net.Conn, outboundConn net.Conn) {
 	defer inboundConn.Close()
 	defer outboundConn.Close()

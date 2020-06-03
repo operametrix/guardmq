@@ -83,7 +83,7 @@ func (peer *Peer) Serve() {
 		},
 		CleanSession: true,
 		ClientIdentifier: randomClientID(20),
-		Keepalive: 60,
+		Keepalive: 0,
 		ProtocolName: "MQTT",
 		ProtocolVersion: 4,
 	}
