@@ -16,9 +16,13 @@ type Config struct {
     Listeners []proxy.Listener
 }
 
+var (
+	cfgFile string
+)
+
 var rootCmd = &cobra.Command{
 	Use:   "run",
-	Short: "MQTT Proxy for peering",
+	Short: "GuardMQ - MQTT Proxy for peering v1.0.0",
 	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
 
@@ -43,13 +47,12 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "/etc/guardmq/guardmq.yml", "config file")
 	cobra.OnInitialize(initConfig)
 }
 
 func initConfig() {
-	viper.SetConfigFile("conf/guardmq.yml")
+	viper.SetConfigFile(cfgFile)
 	viper.SetConfigType("yaml")
-
-	if err := viper.ReadInConfig(); err == nil {
-	}
+	viper.ReadInConfig();
 }
