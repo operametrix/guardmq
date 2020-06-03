@@ -1,6 +1,6 @@
 ## GuardMQ : Open Source Security proxy for peering between MQTT brokers
 
-GuardMQ is a security proxy that manage peering connections between brokers written in GO. The idea is to
+GuardMQ is a security proxy that manage peering connections between brokers written in GO.
 
 At the moment it has support for:
 - MQTT endpoint with TLS and MTLS
