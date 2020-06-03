@@ -1,0 +1,28 @@
+broker:
+  hostname: "localhost"
+  port: 1883
+
+middlewares:
+  - LoggingMiddleware
+
+peers:
+    - hostname: "test.mosquitto.org"
+      port: 1883
+      tls: false
+      cafile: ""
+      mtls: false
+      certfile: ""
+      keyfile: ""
+      import:
+        - "in/#"
+      export:
+        - "out/#"
+
+listeners:
+    - hostname: "0.0.0.0"
+      port: 1884
+      tls: false
+      cafile: ""
+      mtls: false
+      certfile: ""
+      keyfile: ""
