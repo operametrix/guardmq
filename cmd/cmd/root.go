@@ -1,10 +1,12 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"operametrix/mqtt/proxy"
 )
@@ -34,14 +36,26 @@ var rootCmd = &cobra.Command{
 		}
 
 		for _, listener := range config.Listeners {
-			listener.Serve()
+			go listener.Serve()
 		}
+
+		if len(config.Peers) == 0 && len(config.Listeners) == 0 {
+			log.Println("Error: no peer and no listener defined")
+			os.Exit(1)
+		}
+
+		// Wait SIGTERM signal
+		signalChan := make(chan os.Signal, 1)
+		signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+		<-signalChan
+
+		log.Println("Closed the proxy")
 	},
 }
 
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
+		log.Println(err)
 		os.Exit(1)
 	}
 }
