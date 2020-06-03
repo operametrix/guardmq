@@ -41,11 +41,20 @@ func (peer *Peer) Serve() {
 	var err error
 
 	for {
+		err = nil
+
 		if peer.TLS {
+			var caCert []byte
+			var cert tls.Certificate
 			tlsConfig := &tls.Config{}
 
+			if peer.CAFile == "" {
+				log.Println(host, ": you must indicate a CA file for TLS")
+				return
+			}
+
 			caCertPool  := x509.NewCertPool()
-			caCert, err := ioutil.ReadFile(peer.CAFile)
+			caCert, err = ioutil.ReadFile(peer.CAFile)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -53,7 +62,12 @@ func (peer *Peer) Serve() {
 			tlsConfig.RootCAs = caCertPool
 
 			if peer.MTLS {
-				cert, err := tls.LoadX509KeyPair(peer.CertFile, peer.KeyFile)
+				if peer.CertFile == "" || peer.KeyFile == "" {
+					log.Println(host, ": you must indicate a certificate file and a key file for mTLS")
+					return
+				}
+
+				cert, err = tls.LoadX509KeyPair(peer.CertFile, peer.KeyFile)
 				if err != nil {
 					log.Fatal(err.Error())
 				}
@@ -63,6 +77,7 @@ func (peer *Peer) Serve() {
 			inboundConn, err = tls.Dial("tcp", host, tlsConfig)
 			if err != nil {
 				log.Println("Failed to contact the peer", host, "with TLS")
+				log.Println(err.Error())
 			}
 		} else {
 			inboundConn, err = net.Dial("tcp", host)
@@ -94,9 +109,20 @@ func (peer *Peer) Serve() {
 			ProtocolVersion: 4,
 		}
 		connectPacket.Write(inboundConn)
-		packets.ReadPacket(inboundConn)
+		_, err = packets.ReadPacket(inboundConn)
+		if err != nil {
+			log.Println(err.Error())
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
 		connectPacket.Write(outboundConn)
-		packets.ReadPacket(outboundConn)
+		_, err = packets.ReadPacket(outboundConn)
+		if err != nil {
+			log.Println(err.Error())
+			time.Sleep(5 * time.Second)
+			continue
+		}
 
 		subPacket := packets.SubscribePacket{
 			FixedHeader: packets.FixedHeader{
@@ -108,7 +134,12 @@ func (peer *Peer) Serve() {
 			Qoss: make([]byte,len(peer.Import)),
 		}
 		subPacket.Write(inboundConn)
-		packets.ReadPacket(inboundConn)
+		_, err = packets.ReadPacket(inboundConn)
+		if err != nil {
+			log.Println(err.Error())
+			time.Sleep(5 * time.Second)
+			continue
+		}
 
 		subPacket = packets.SubscribePacket{
 			FixedHeader: packets.FixedHeader{
@@ -120,7 +151,12 @@ func (peer *Peer) Serve() {
 			Qoss: make([]byte,len(peer.Export)),
 		}
 		subPacket.Write(outboundConn)
-		packets.ReadPacket(outboundConn)
+		_, err = packets.ReadPacket(outboundConn)
+		if err != nil {
+			log.Println(err.Error())
+			time.Sleep(5 * time.Second)
+			continue
+		}
 
 		if peer.TLS {
 			log.Println("Open TLS peering session with", host)

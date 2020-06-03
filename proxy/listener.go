@@ -21,11 +21,17 @@ type Listener struct {
 }
 
 func (listener *Listener) Serve() {
-	hostString := fmt.Sprintf("%s:%s", listener.Hostname, strconv.Itoa(listener.Port))
+	host := fmt.Sprintf("%s:%s", listener.Hostname, strconv.Itoa(listener.Port))
 
 	var l net.Listener
 	var err error
 	if listener.TLS {
+
+		if listener.CertFile == "" || listener.KeyFile == "" {
+			log.Println(host, ": you must indicate a certificate file and a key file")
+			return
+		}
+
 		cert, err := tls.LoadX509KeyPair(listener.CertFile, listener.KeyFile)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -36,6 +42,11 @@ func (listener *Listener) Serve() {
 		}
 
 		if listener.MTLS {
+			if listener.CAFile == "" {
+				log.Println(host, ": you must indicate a CA file for mTLS")
+				return
+			}
+
 			caCertPool  := x509.NewCertPool()
 			caCert, err := ioutil.ReadFile(listener.CAFile)
 			if err != nil {
@@ -47,11 +58,11 @@ func (listener *Listener) Serve() {
 			tlsConfig.ClientCAs  = caCertPool
 		}
 
-		log.Println("Start to listen on", hostString, "with TLS")
-		l, err = tls.Listen("tcp", hostString, tlsConfig)
+		log.Println("Start to listen on", host, "with TLS")
+		l, err = tls.Listen("tcp", host, tlsConfig)
 	} else {
-		log.Println("Start to listen on", hostString)
-		l, err = net.Listen("tcp", hostString)
+		log.Println("Start to listen on", host)
+		l, err = net.Listen("tcp", host)
 	}
 
 	if err != nil {
@@ -66,7 +77,7 @@ func (listener *Listener) Serve() {
 			log.Println(err)
 			return
 		}
-		log.Println("[", hostString, "] new connection from", conn.RemoteAddr())
+		log.Println("[", host, "] new connection from", conn.RemoteAddr())
 		go LaunchConnection(conn)
 	}
 }
