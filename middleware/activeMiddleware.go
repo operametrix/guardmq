@@ -19,7 +19,6 @@ func ActiveMiddleware(next Handler) Handler {
 			if p.PasswordFlag {
 				current_session.Password = p.Password
 			}
-			current_session.Print()
 
 			connack := packets.NewControlPacket(packets.Connack)
 			connack.Write(current_session.OutboundConn)

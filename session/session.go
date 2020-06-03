@@ -1,7 +1,6 @@
 package session
 
 import (
-	"log"
 	"net"
 )
 
@@ -16,13 +15,8 @@ type Session struct {
 	Subscriptions []string
 }
 
-func (session *Session) Print() {
-	log.Println("New session from clientID:", session.ClientID)
-}
-
 func (session *Session) Destroy() {
 	if session.IsDestroy == false {
-		log.Println("Destroy session from clientID:", session.ClientID)
 		session.IsDestroy = true
 	}
 }

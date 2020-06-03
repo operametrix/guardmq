@@ -47,10 +47,10 @@ func (listener *Listener) Serve() {
 			tlsConfig.ClientCAs  = caCertPool
 		}
 
-		log.Println("Start to listen at", hostString, "with TLS")
+		log.Println("Start to listen on", hostString, "with TLS")
 		l, err = tls.Listen("tcp", hostString, tlsConfig)
 	} else {
-		log.Println("Start to listen at", hostString)
+		log.Println("Start to listen on", hostString)
 		l, err = net.Listen("tcp", hostString)
 	}
 

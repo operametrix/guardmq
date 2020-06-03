@@ -47,7 +47,7 @@ func init() {
 }
 
 func initConfig() {
-	viper.SetConfigFile("conf/mqttproxy.yml")
+	viper.SetConfigFile("conf/guardmq.yml")
 	viper.SetConfigType("yaml")
 
 	if err := viper.ReadInConfig(); err == nil {

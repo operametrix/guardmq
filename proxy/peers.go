@@ -116,5 +116,11 @@ func (peer *Peer) Serve() {
 	subPacket.Write(outboundConn)
 	packets.ReadPacket(outboundConn)
 
+	if peer.TLS {
+		log.Println("Open TLS peering session wth", host)
+	} else {
+		log.Println("Open peering session with", host)
+	}
+
 	go HandleConnection(inboundConn, outboundConn)
 }
