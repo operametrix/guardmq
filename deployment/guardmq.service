@@ -1,0 +1,18 @@
+[Unit]
+Description=GuardMQ MQTT proxy service
+Requires=network.target
+
+[Service]
+User=root
+ExecStart=/usr/bin/guardmq -c /etc/guardmq/guardmq.yml
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+
+[Install]
+WantedBy=multi-user.target
