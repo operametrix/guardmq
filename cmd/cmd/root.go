@@ -23,8 +23,8 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "run",
-	Short: "GuardMQ - MQTT Proxy for peering v1.0.0",
+	Use:   "guardmq",
+	Short: "GuardMQ - MQTT Proxy toolbox v1.0.0",
 	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
 
