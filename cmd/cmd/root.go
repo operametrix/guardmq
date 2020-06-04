@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"operametrix/mqtt/proxy"
+	"operametrix/mqtt/middleware"
 )
 
 type Config struct {
@@ -42,6 +43,14 @@ var rootCmd = &cobra.Command{
 		if len(config.Peers) == 0 && len(config.Listeners) == 0 {
 			log.Println("Error: no peer and no listener defined")
 			os.Exit(1)
+		}
+
+		// Start Middleware routines
+		for _, m := range config.Middlewares {
+			switch m {
+			case "StatsMiddleware":
+				go middleware.StatsRoutineMiddleware()
+			}
 		}
 
 		// Wait SIGTERM signal

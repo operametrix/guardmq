@@ -19,10 +19,6 @@ type LocalBrokerConfig struct {
 	Broker LocalBroker
 }
 
-type MiddlewareConfig struct {
-	Middlewares []string
-}
-
 func ConnectLocalBroker() (conn net.Conn, err error) {
 	var config LocalBrokerConfig
 	viper.Unmarshal(&config)
@@ -42,10 +38,11 @@ func HandleConnection(inboundConn net.Conn, outboundConn net.Conn) {
 	defer outboundConn.Close()
 
 	var current_session session.Session
+	session.ActiveSessions = append(session.ActiveSessions, &current_session)
 	current_session.InboundConn = inboundConn
 	current_session.OutboundConn = outboundConn
 
-	var config MiddlewareConfig
+	var config middleware.MiddlewareConfig
 	viper.Unmarshal(&config)
 
 	// Create the chain of middleware for inbound
@@ -59,6 +56,8 @@ func HandleConnection(inboundConn net.Conn, outboundConn net.Conn) {
 			inboundPipeline = middleware.ActiveMiddleware(inboundPipeline)
 		case "ExampleMiddleware":
 			inboundPipeline = middleware.ExampleMiddleware(inboundPipeline)
+		case "StatsMiddleware":
+			inboundPipeline = middleware.StatsInMiddleware(inboundPipeline)
 		}
 	}
 
@@ -73,6 +72,8 @@ func HandleConnection(inboundConn net.Conn, outboundConn net.Conn) {
 			outboundPipeline = middleware.ActiveMiddleware(outboundPipeline)
 		case "ExampleMiddleware":
 			outboundPipeline = middleware.ExampleMiddleware(outboundPipeline)
+		case "StatsMiddleware":
+			outboundPipeline = middleware.StatsOutMiddleware(outboundPipeline)
 		}
 	}
 

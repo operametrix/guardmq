@@ -5,6 +5,10 @@ import (
 	"operametrix/mqtt/session"
 )
 
+type MiddlewareConfig struct {
+	Middlewares []string
+}
+
 type Handler interface {
 	Serve(current_session *session.Session, packet *packets.ControlPacket)
 }

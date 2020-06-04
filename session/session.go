@@ -2,11 +2,25 @@ package session
 
 import (
 	"net"
+	"sync"
 )
+
+var (
+	ActiveSessions []*Session
+)
+
+type SessionStatistics struct {
+	Mux sync.Mutex
+	InTotalPackets int
+	InPublishPackets int
+	OutTotalPackets int
+	OutPublishPackets int
+}
 
 type Session struct {
 	InboundConn   net.Conn
 	OutboundConn  net.Conn
+	Stats         SessionStatistics
 	ClientID      string
 	Username      string
 	Password      []byte
