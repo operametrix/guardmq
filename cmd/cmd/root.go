@@ -33,11 +33,13 @@ var rootCmd = &cobra.Command{
 		viper.Unmarshal(&config)
 
 		for _, peer := range config.Peers {
-			go peer.Serve()
+			new_peer := peer
+			go new_peer.Serve()
 		}
 
 		for _, listener := range config.Listeners {
-			go listener.Serve()
+			new_listener := listener
+			go new_listener.Serve()
 		}
 
 		if len(config.Peers) == 0 && len(config.Listeners) == 0 {
@@ -50,6 +52,7 @@ var rootCmd = &cobra.Command{
 			switch m {
 			case "StatsMiddleware":
 				go middleware.StatsRoutineMiddleware()
+				break
 			}
 		}
 
