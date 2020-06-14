@@ -2,7 +2,6 @@ package notify
 
 import (
 	"github.com/spf13/viper"
-	"log"
 )
 
 type NotifyPlugins struct {
