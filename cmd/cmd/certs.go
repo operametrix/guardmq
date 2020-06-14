@@ -26,12 +26,12 @@ var certsCmd = &cobra.Command{
 
 	switch args[0] {
 	case "ca":
-		err := exec.Command("openssl", "genrsa", "-out", "certs/ca.key", "4096").Run()
+		err := exec.Command("openssl", "genrsa", "-out", "/etc/guardmq/certs/ca.key", "4096").Run()
 		if err != nil {
 			fmt.Printf("%s", err)
 		}
 
-		command := exec.Command("openssl", "req", "-new", "-x509", "-key", "certs/ca.key", "-out", "certs/ca.crt")
+		command := exec.Command("openssl", "req", "-new", "-x509", "-key", "/etc/guardmq/certs/ca.key", "-out", "/etc/guardmq/certs/ca.crt")
 		command.Stderr = os.Stderr
 		command.Stdin = os.Stdin
 		command.Stdout = os.Stdout
@@ -42,12 +42,12 @@ var certsCmd = &cobra.Command{
 		command.Wait()
 
 	case "listener":
-		err := exec.Command("openssl", "genrsa", "-out", "certs/server.key", "4096").Run()
+		err := exec.Command("openssl", "genrsa", "-out", "/etc/guardmq/certs/server.key", "4096").Run()
 		if err != nil {
 			fmt.Printf("%s", err)
 		}
 
-		command := exec.Command("openssl", "req", "-new", "-key", "certs/server.key", "-out", "certs/server.csr")
+		command := exec.Command("openssl", "req", "-new", "-key", "/etc/guardmq/certs/server.key", "-out", "/etc/guardmq/certs/server.csr")
 		command.Stderr = os.Stderr
 		command.Stdin = os.Stdin
 		command.Stdout = os.Stdout
@@ -57,18 +57,18 @@ var certsCmd = &cobra.Command{
 		}
 		command.Wait()
 
-		err = exec.Command("openssl", "x509", "-req", "-in", "certs/server.csr", "-CA", "certs/ca.crt", "-CAkey", "certs/ca.key", "-CAcreateserial", "-out", "certs/server.crt").Run()
+		err = exec.Command("openssl", "x509", "-req", "-in", "/etc/guardmq/certs/server.csr", "-CA", "/etc/guardmq/certs/ca.crt", "-CAkey", "/etc/guardmq/certs/ca.key", "-CAcreateserial", "-out", "/etc/guardmq/certs/server.crt").Run()
 		if err != nil {
 			fmt.Printf("%s", err)
 		}
 
 	case "peer":
-		err := exec.Command("openssl", "genrsa", "-out", "certs/peers/"+name+".key", "4096").Run()
+		err := exec.Command("openssl", "genrsa", "-out", "/etc/guardmq/certs/peers/"+name+".key", "4096").Run()
 		if err != nil {
 			fmt.Printf("%s", err)
 		}
 
-		command := exec.Command("openssl", "req", "-new", "-key", "certs/peers/"+name+".key", "-out", "certs/peers/"+name+".csr")
+		command := exec.Command("openssl", "req", "-new", "-key", "/etc/guardmq/certs/peers/"+name+".key", "-out", "/etc/guardmq/certs/peers/"+name+".csr")
 		command.Stderr = os.Stderr
 		command.Stdin = os.Stdin
 		command.Stdout = os.Stdout
@@ -78,7 +78,7 @@ var certsCmd = &cobra.Command{
 		}
 		command.Wait()
 
-		err = exec.Command("openssl", "x509", "-req", "-in", "certs/peers/"+name+".csr", "-CA", "certs/ca.crt", "-CAkey", "certs/ca.key", "-CAcreateserial", "-out", "certs/peers/"+name+".crt").Run()
+		err = exec.Command("openssl", "x509", "-req", "-in", "/etc/guardmq/certs/peers/"+name+".csr", "-CA", "/etc/guardmq/certs/ca.crt", "-CAkey", "/etc/guardmq/certs/ca.key", "-CAcreateserial", "-out", "/etc/guardmq/certs/peers/"+name+".crt").Run()
 		if err != nil {
 			fmt.Printf("%s", err)
 		}
