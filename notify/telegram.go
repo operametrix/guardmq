@@ -14,7 +14,6 @@ type TelegramNotify struct {
 
 func (self *TelegramNotify) Notify(message string) {
 	if (len(self.Token) == 0) || (len(self.ChatID) == 0) {
-		log.Println("No credentials")
 		return
 	}
 

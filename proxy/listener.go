@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"operametrix/mqtt/session"
 )
 
 type Listener struct {
@@ -25,6 +26,8 @@ func (listener *Listener) Serve() {
 
 	var l net.Listener
 	var err error
+	var commonName string
+
 	if listener.TLS {
 
 		if listener.CertFile == "" || listener.KeyFile == "" {
@@ -78,17 +81,46 @@ func (listener *Listener) Serve() {
 			return
 		}
 		log.Println("[", host, "] new connection from", conn.RemoteAddr())
-		go LaunchConnection(conn)
+
+		if listener.TLS {
+			err := conn.(*tls.Conn).Handshake()
+			if err != nil {
+				log.Println(err)
+				conn.Close()
+				continue
+			}
+
+			state := conn.(*tls.Conn).ConnectionState()
+			if (len(state.VerifiedChains) <= 0) || (len(state.VerifiedChains[0]) <= 0) {
+				log.Println("Unverified certificate chain")
+				conn.Close()
+				continue
+			}
+
+			commonName = state.VerifiedChains[0][0].Subject.CommonName
+		}
+
+		var current_session session.Session
+		current_session.InboundConn = conn
+		current_session.EndPoint = conn.RemoteAddr().String()
+
+		if listener.TLS {
+			current_session.CommonName = commonName
+		} else {
+			current_session.CommonName = conn.RemoteAddr().String()
+		}
+
+		go LaunchConnection(&current_session)
 	}
 }
 
-func LaunchConnection(inboundConn net.Conn) {
-	outboundConn, err := ConnectLocalBroker()
+func LaunchConnection(current_session *session.Session) {
+	err := ConnectLocalBroker(current_session)
 	if err != nil {
 		log.Println("Failed to serve the incoming connection")
-		inboundConn.Close()
+		current_session.InboundConn.Close()
 		return
 	}
 
-	HandleConnection(inboundConn, outboundConn)
+	HandleConnection(current_session)
 }

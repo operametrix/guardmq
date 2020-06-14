@@ -10,6 +10,7 @@ import (
 	"log"
 	"net"
 	"github.com/eclipse/paho.mqtt.golang/packets"
+	"operametrix/mqtt/session"
 )
 
 func randomClientID(n int) string {
@@ -23,6 +24,7 @@ func randomClientID(n int) string {
 }
 
 type Peer struct {
+	Name     string    `yaml:"name"`
 	Hostname string    `yaml:"hostname"`
 	Port     int       `yaml:"port"`
 	TLS      bool      `yaml:"tls"`
@@ -37,7 +39,7 @@ type Peer struct {
 func (peer *Peer) Serve() {
 
 	host := fmt.Sprintf("%s:%d", peer.Hostname, peer.Port)
-	var inboundConn net.Conn
+	var current_session session.Session
 	var err error
 
 	for {
@@ -74,13 +76,13 @@ func (peer *Peer) Serve() {
 				tlsConfig.Certificates = []tls.Certificate{cert}
 			}
 
-			inboundConn, err = tls.Dial("tcp", host, tlsConfig)
+			current_session.InboundConn, err = tls.Dial("tcp", host, tlsConfig)
 			if err != nil {
 				log.Println("Failed to contact the peer", host, "with TLS")
 				log.Println(err.Error())
 			}
 		} else {
-			inboundConn, err = net.Dial("tcp", host)
+			current_session.InboundConn, err = net.Dial("tcp", host)
 			if err != nil {
 				log.Println("Failed to contact the peer", host)
 			}
@@ -91,7 +93,7 @@ func (peer *Peer) Serve() {
 			continue
 		}
 
-		outboundConn, err := ConnectLocalBroker()
+		err = ConnectLocalBroker(&current_session)
 		if err != nil {
 			log.Println("Session with the peer", host, "failed")
 			time.Sleep(5 * time.Second)
@@ -108,16 +110,16 @@ func (peer *Peer) Serve() {
 			ProtocolName: "MQTT",
 			ProtocolVersion: 4,
 		}
-		connectPacket.Write(inboundConn)
-		_, err = packets.ReadPacket(inboundConn)
+		connectPacket.Write(current_session.InboundConn)
+		_, err = packets.ReadPacket(current_session.InboundConn)
 		if err != nil {
 			log.Println(err.Error())
 			time.Sleep(5 * time.Second)
 			continue
 		}
 
-		connectPacket.Write(outboundConn)
-		_, err = packets.ReadPacket(outboundConn)
+		connectPacket.Write(current_session.OutboundConn)
+		_, err = packets.ReadPacket(current_session.OutboundConn)
 		if err != nil {
 			log.Println(err.Error())
 			time.Sleep(5 * time.Second)
@@ -133,8 +135,8 @@ func (peer *Peer) Serve() {
 			Topics: peer.Import,
 			Qoss: make([]byte,len(peer.Import)),
 		}
-		subPacket.Write(inboundConn)
-		_, err = packets.ReadPacket(inboundConn)
+		subPacket.Write(current_session.InboundConn)
+		_, err = packets.ReadPacket(current_session.InboundConn)
 		if err != nil {
 			log.Println(err.Error())
 			time.Sleep(5 * time.Second)
@@ -150,8 +152,8 @@ func (peer *Peer) Serve() {
 			Topics: peer.Export,
 			Qoss: make([]byte,len(peer.Export)),
 		}
-		subPacket.Write(outboundConn)
-		_, err = packets.ReadPacket(outboundConn)
+		subPacket.Write(current_session.OutboundConn)
+		_, err = packets.ReadPacket(current_session.OutboundConn)
 		if err != nil {
 			log.Println(err.Error())
 			time.Sleep(5 * time.Second)
@@ -164,7 +166,10 @@ func (peer *Peer) Serve() {
 			log.Println("Open peering session with", host)
 		}
 
-		HandleConnection(inboundConn, outboundConn)
+		current_session.EndPoint = host
+		current_session.CommonName = peer.Name
+
+		HandleConnection(&current_session)
 		log.Println("Connection failed for peer", host)
 		time.Sleep(5 * time.Second)
 	}

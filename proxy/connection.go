@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"operametrix/mqtt/middleware"
 	"operametrix/mqtt/session"
+	"operametrix/mqtt/notify"
 	"github.com/eclipse/paho.mqtt.golang/packets"
 )
 
@@ -19,28 +20,23 @@ type LocalBrokerConfig struct {
 	Broker LocalBroker
 }
 
-func ConnectLocalBroker() (conn net.Conn, err error) {
+func ConnectLocalBroker(current_session *session.Session) (err error) {
 	var config LocalBrokerConfig
 	viper.Unmarshal(&config)
 
 	localBrokerHost := fmt.Sprintf("%s:%d", config.Broker.Hostname, config.Broker.Port)
-	outboundConn, err := net.Dial("tcp", localBrokerHost)
+	current_session.OutboundConn, err = net.Dial("tcp", localBrokerHost)
 	if err != nil {
 		log.Println("Failed to contact the broker")
-		return
+		return err
 	}
-	
-	return outboundConn, err
+
+	return err
 }
 
-func HandleConnection(inboundConn net.Conn, outboundConn net.Conn) {
-	defer inboundConn.Close()
-	defer outboundConn.Close()
-
-	var current_session session.Session
-	session.ActiveSessions = append(session.ActiveSessions, &current_session)
-	current_session.InboundConn = inboundConn
-	current_session.OutboundConn = outboundConn
+func HandleConnection(current_session *session.Session) {
+	defer current_session.InboundConn.Close()
+	defer current_session.OutboundConn.Close()
 
 	var config middleware.MiddlewareConfig
 	viper.Unmarshal(&config)
@@ -80,29 +76,33 @@ func HandleConnection(inboundConn net.Conn, outboundConn net.Conn) {
 	// Create the routine to manage inbound flow
 	inboundChannel := make(chan packets.ControlPacket)
 	inboundErrorChannel := make(chan error)
-	go SocketReader(inboundConn, inboundChannel, inboundErrorChannel)
+	go SocketReader(current_session.InboundConn, inboundChannel, inboundErrorChannel)
 
 	// Create the routine to manage outbound flow
 	outboundChannel := make(chan packets.ControlPacket)
 	outboundErrorChannel := make(chan error)
-	go SocketReader(outboundConn, outboundChannel, outboundErrorChannel)
+	go SocketReader(current_session.OutboundConn, outboundChannel, outboundErrorChannel)
+
+	go notify.Notify("[" + current_session.CommonName + "] start new session")
 
 	for {
 		select {
 		case data := <-inboundChannel:
-			inboundPipeline.Serve(&current_session, &data)
+			inboundPipeline.Serve(current_session, &data)
 
 		case <-inboundErrorChannel:
+			log.Println("Closed connection from", current_session.InboundConn.RemoteAddr())
+			go notify.Notify("[" + current_session.CommonName + "] session error")
 			current_session.Destroy()
-			log.Println("Closed connection from", inboundConn.RemoteAddr())
 			return
 
 		case data := <-outboundChannel:
-			outboundPipeline.Serve(&current_session, &data)
+			outboundPipeline.Serve(current_session, &data)
 
 		case <-outboundErrorChannel:
+			log.Println("Closed connection from", current_session.OutboundConn.RemoteAddr())
+			go notify.Notify("[" + current_session.CommonName + "] session error")
 			current_session.Destroy()
-			log.Println("Closed connection from", inboundConn.RemoteAddr())
 			return
 		}
 	}

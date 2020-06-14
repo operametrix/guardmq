@@ -18,6 +18,8 @@ type SessionStatistics struct {
 }
 
 type Session struct {
+	CommonName    string
+	EndPoint      string
 	InboundConn   net.Conn
 	OutboundConn  net.Conn
 	Stats         SessionStatistics
