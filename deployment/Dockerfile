@@ -13,6 +13,7 @@ COPY proxy proxy
 COPY cmd cmd
 COPY session session
 COPY conf conf
+COPY notify notify
 
 RUN go build cmd/main.go
 
