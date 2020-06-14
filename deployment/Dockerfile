@@ -30,6 +30,4 @@ COPY --from=go-builder /go/src/operametrix/mqtt/guardmq .
 COPY --from=go-builder /go/src/operametrix/mqtt/conf ./conf/
 ENV PATH="/usr/share/proxy:${PATH}"
 
-EXPOSE 1883
-
 ENTRYPOINT [ "./guardmq" ]
