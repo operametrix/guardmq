@@ -57,7 +57,7 @@ var certsCmd = &cobra.Command{
 		}
 		command.Wait()
 
-		err = exec.Command("openssl", "x509", "-req", "-in", "/etc/guardmq/certs/server.csr", "-CA", "/etc/guardmq/certs/ca.crt", "-CAkey", "/etc/guardmq/certs/ca.key", "-CAcreateserial", "-out", "/etc/guardmq/certs/server.crt").Run()
+		err = exec.Command("openssl", "x509", "-req", "-days", "1095", "-in", "/etc/guardmq/certs/server.csr", "-CA", "/etc/guardmq/certs/ca.crt", "-CAkey", "/etc/guardmq/certs/ca.key", "-CAcreateserial", "-out", "/etc/guardmq/certs/server.crt").Run()
 		if err != nil {
 			fmt.Printf("%s", err)
 		}
@@ -78,7 +78,7 @@ var certsCmd = &cobra.Command{
 		}
 		command.Wait()
 
-		err = exec.Command("openssl", "x509", "-req", "-in", "/etc/guardmq/certs/peers/"+name+".csr", "-CA", "/etc/guardmq/certs/ca.crt", "-CAkey", "/etc/guardmq/certs/ca.key", "-CAcreateserial", "-out", "/etc/guardmq/certs/peers/"+name+".crt").Run()
+		err = exec.Command("openssl", "x509", "-req", "-days", "1095", "-in", "/etc/guardmq/certs/peers/"+name+".csr", "-CA", "/etc/guardmq/certs/ca.crt", "-CAkey", "/etc/guardmq/certs/ca.key", "-CAcreateserial", "-out", "/etc/guardmq/certs/peers/"+name+".crt").Run()
 		if err != nil {
 			fmt.Printf("%s", err)
 		}
