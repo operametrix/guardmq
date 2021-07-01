@@ -15,6 +15,13 @@ Check before that if your distribution integrates golang packages or not.
 Then :
 ```
 go build -o guardmq cmd/main.go
+cp guardmq /usr/local/bin/
+mkdir /etc/guardmq/
+cp conf/guardmq.yml /etc/guardmq/
+cp guardmq.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable guardmq.service
+systemctl start guardmq.service
 ```
 
 ### Docker installation
